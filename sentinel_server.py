@@ -11,7 +11,7 @@ def status():
 
     Returns:
         string: "Server is on"
-    """    
+    """
     return "Server is on"
 
 
@@ -54,7 +54,7 @@ def new_attending():
     }
     This method will be used to match information to an existing attending,
     as specified by the new_patient() method
-    
+
     Returns:
         dict: attending dict added to database
     """
@@ -76,7 +76,7 @@ def heart_rate():
     This method will be used to match heart-rate
     information to an existing patient,
     as specified by the patient_id
-    
+
     Returns:
         int: Fetched heart rate
     """
@@ -100,7 +100,7 @@ def status_pid(patient_id):
     This method will be used to tell if specified patient
     is tachycardic or not, and the time of the most recent
     heart rate
-    
+
     Returns:
         string: Status
     """
