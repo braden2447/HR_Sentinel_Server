@@ -71,7 +71,7 @@ def new_attending():
         "attending_username": str,  # Physician name formatted as:
                                       "Lastname.Firstinitial"
         "attending_email": str,     # email, "dr_user_id@yourdomain.com"
-        "attending_phone": str      # Phone #, ###-###-####
+        "attending_phone": str      # Phone #, "###-###-####"
     }
     This method will be used to create a new attending physician,
     as specified by the add_attending_to_databasee() method
@@ -79,15 +79,30 @@ def new_attending():
     Returns:
         dict: attending dict added to database
     """
-    return None, 500
+    # Accept and validate attending input
+    in_data = request.get_json()
+    expected_values = {"attending_username": str,
+                       "attending_email": str,
+                       "attending_phone": str}
+    error_string, status_code = validate_dict_input(in_data, expected_values)
+    if error_string is not True:
+        return error_string, status_code
+
+    # External methods
+    attending = add_attending_to_database(in_data["attending_username"],
+                                          in_data["attending_email"],
+                                          in_data["attending_phone"])
+
+    # Data output and return
+    return "Added attending {}".format(attending), 200
 
 
 @app.route("/api/heart_rate", methods=["POST"])
 def heart_rate():
-    """Accepts json request and posts new patient
+    """Accepts json request and posts new patient heart rate
     to server database.
 
-    Method curated by _______
+    Method curated by Braden Garrison
 
     json request should contain a dict formatted as follows:
     {
@@ -101,7 +116,19 @@ def heart_rate():
     Returns:
         int: Fetched heart rate
     """
-    return None, 500
+    # Accept and validate id and heart rate input
+    in_data = request.get_json()
+    expected_values = {"patient_id": [str, int],
+                       "heart_rate": [str, int]}
+    error_string, status_code = validate_dict_input(in_data, expected_values)
+
+    # Match patient and update heart rate information
+    patient = get_patient_from_database(in_data["patient_id"])
+    add_hr = add_heart_rate(patient, in_data["heart_rate"])
+
+    # Data output and return
+    return "Added heart rate information {} "
+    "for patient id {}".format(add_hr, in_data["patient_id"]), 200
 
 
 @app.route("/api/status/<patient_id>", methods=["GET"])
@@ -217,7 +244,7 @@ def get_patient_from_database(id_no):
     return patlist[0]
 
 
-def add_attending_to_database(att_name, att_email, att_phone):
+def add_attending_to_database(att_name, att_email, att_phone, att_db):
     attendant = {
             "name": att_name,
             "email": att_email,
@@ -235,6 +262,17 @@ def get_attending_from_database(attendant_name):
     if len(attlist) > 1:
         return "ERROR: name not unique identifier"
     return attlist[0]
+
+
+def add_heart_rate(patient, heart_rate):
+    timestamp = datetime.now()
+    timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+    # tach = is_tachycardic(heart_rate, patient["patient_age"])
+    hr_info = [{"heart_rate": heart_rate,
+                "status": tach,
+                "timestamp": timestamp}]
+    update_pat = patient.update({"patient_hr": hr_info})
+    return hr_info
 
 
 def str_to_int(value):
