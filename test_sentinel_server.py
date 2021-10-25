@@ -62,6 +62,31 @@ def test_get_attending_from_database(attendant_name):
     None
 
 
+@pytest.mark.parametrize("patient, heart_rate", [])
+def test_add_heart_rate(patient, heart_rate):
+    from sentinel_server import add_heart_rate
+    None
+
+
+@pytest.mark.parametrize("hr, age, expected", [
+    (100, 1, "not tachycardic"),
+    (160, 2, "tachycardic"),
+    (100, 4, "not tachycardic"),
+    (140, 3, "tachycardic"),
+    (100, 6, "not tachycardic"),
+    (135, 7, "tachycardic"),
+    (100, 9, "not tachycardic"),
+    (135, 10, "tachycardic"),
+    (100, 13, "not tachycardic"),
+    (120, 14, "tachycardic"),
+    (90, 15, "not tachycardic"),
+    (110, 50, "tachycardic")])
+def test_is_tachycardic(hr, age, expected):
+    from sentinel_server import is_tachycardic
+    answer = is_tachycardic(hr, age)
+    assert answer == expected
+
+
 def test_str_to_int():
     from sentinel_server import str_to_int
     None

@@ -267,12 +267,48 @@ def get_attending_from_database(attendant_name):
 def add_heart_rate(patient, heart_rate):
     timestamp = datetime.now()
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    # tach = is_tachycardic(heart_rate, patient["patient_age"])
+    tach = is_tachycardic(heart_rate, patient["patient_age"])
     hr_info = [{"heart_rate": heart_rate,
                 "status": tach,
                 "timestamp": timestamp}]
     update_pat = patient.update({"patient_hr": hr_info})
     return hr_info
+
+
+def is_tachycardic(hr, age):
+    if 1 <= age < 3:
+        if hr > 151:
+            tach = "tachycardic"
+        else:
+            tach = "not tachycardic"
+    elif 3 <= age < 5:
+        if hr > 137:
+            tach = "tachycardic"
+        else:
+            tach = "not tachycardic"
+    elif 5 <= age < 8:
+        if hr > 133:
+            tach = "tachycardic"
+        else:
+            tach = "not tachycardic"
+    elif 8 <= age < 12:
+        if hr > 130:
+            tach = "tachycardic"
+        else:
+            tach = "not tachycardic"
+    elif 12 <= age < 15:
+        if hr > 119:
+            tach = "tachycardic"
+        else:
+            tach = "not tachycardic"
+    else:
+        if hr > 100:
+            tach = "tachycardic"
+        else:
+            tach = "not tachycardic"
+    # if tach == "tachycardic":
+    #    create log entry and send email
+    return tach
 
 
 def str_to_int(value):
