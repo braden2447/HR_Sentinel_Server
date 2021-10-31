@@ -81,9 +81,9 @@ def new_attending():
     """
     # Accept and validate attending input
     in_data = request.get_json()
-    expected_values = {"attending_username": str,
-                       "attending_email": str,
-                       "attending_phone": str}
+    expected_values = {"attending_username": [str],
+                       "attending_email": [str],
+                       "attending_phone": [str]}
     error_string, status_code = validate_dict_input(in_data, expected_values)
     if error_string is not True:
         return error_string, status_code
@@ -136,7 +136,7 @@ def status_pid(patient_id):
     """Accepts json request and posts new patient
     to server database.
 
-    Method curated by _______
+    Method curated by Anuj Som
 
     <patient_id> request should contain an existing pid.
     The output will return a json dict formatted as follows:
@@ -172,6 +172,28 @@ def heart_rate_interval_avg():
 
 @app.route("/api/patients/<attending_username>", methods=["GET"])
 def patients_attending_username(attending_username):
+    """Accepts attending name and returns a list of patients
+    that attending is responsible for by querying the database.
+
+    Method curated by Anuj Som
+
+    <attending_username> request should contain a name formatted as
+    "Lastname.Firstinitial".
+    The output will return a json formatted as follows:
+    {
+        "patient_id": int,                           # pid
+        "last_heart_rate": int,                      # heart rate
+        "last_time": (str) "2018-03-09 11:00:36",    # datetime string
+        "status":  "tachycardic" | "not tachycardic" # status
+    }
+    This method will return an error if attending not found.
+    Additionally, will return an empty list if no patients associated
+    with provided attending.
+
+    Returns:
+        string: json dict above
+    """
+    
     return None, 500
 
 
@@ -265,7 +287,7 @@ def get_attending_from_database(attendant_name):
 
 
 def add_heart_rate(patient, heart_rate):
-    timestamp = datetime.now()
+    timestamp = dt.now()
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     tach = is_tachycardic(heart_rate, patient["patient_age"])
     hr_info = [{"heart_rate": heart_rate,
