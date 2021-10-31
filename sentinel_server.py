@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
-import datetime as dt
+from datetime import datetime as dt
 
 
 app = Flask(__name__)
@@ -125,8 +125,8 @@ def heart_rate():
         return error_string, status_code
 
     # Match patient and update heart rate information
-    patient = get_patient_from_database(in_data["patient_id"])
-    add_hr = add_heart_rate(patient, in_data["heart_rate"])
+    patient = get_patient_from_database(str_to_int(in_data["patient_id"]))
+    add_hr = add_heart_rate(patient, str_to_int(in_data["heart_rate"]))
 
     # Data output and return
     return "Added heart rate information {} "
@@ -334,16 +334,16 @@ def get_attending_from_database(attendant_name):
 
 
 def add_heart_rate(patient, heart_rate):
-    timestamp = datetime.now()
+    timestamp = dt.now()
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     tach = is_tachycardic(heart_rate, patient["patient_age"])
-    hr_info = [{"heart_rate": heart_rate,
-                "status": tach,
-                "timestamp": timestamp}]
+    hr_info = {"heart_rate": heart_rate,
+               "status": tach,
+               "timestamp": timestamp}
     if "patient_hr" in patient.keys():
         patient["patient_hr"].append(hr_info)
     else:
-        update_pat = patient.update({"patient_hr": hr_info})
+        update_pat = patient.update({"patient_hr": [hr_info]})
     return hr_info
 
 
@@ -397,20 +397,18 @@ def heart_rate_average(hr_list):
     total = 0
     for x in hr_list:
         total += x
-    hr_avg = total/len(hr_list)
+    hr_avg = int(total/len(hr_list))
     return hr_avg
 
 
 def heart_rate_interval(interval_time, patient):
-    interval_dt = datetime.datetime.strptime(interval_time,
-                                             "%Y-%m-%d %H:%M:%S")
+    interval_dt = dt.strptime(interval_time, "%Y-%m-%d %H:%M:%S")
     hr_interval = []
     if "patient_hr" not in patient.keys():
         return "ERROR: no heart rate values saved for patient"
     else:
         for x in patient["patient_hr"]:
-            hr_dt = datetime.datetime.strptime(x["timestamp"],
-                                               "%Y-%m-%d %H:%M:%S")
+            hr_dt = dt.strptime(x["timestamp"], "%Y-%m-%d %H:%M:%S")
             if hr_dt > interval_dt:
                 hr_interval.append(x["heart_rate"])
     return hr_interval
