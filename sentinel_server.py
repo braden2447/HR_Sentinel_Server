@@ -179,7 +179,7 @@ def patients_attending_username(attending_username):
 
     <attending_username> request should contain a name formatted as
     "Lastname.Firstinitial".
-    The output will return a json formatted as follows:
+    The output will return a json string formatted as follows:
     {
         "patient_id": int,                           # pid
         "last_heart_rate": int,                      # heart rate
@@ -191,10 +191,28 @@ def patients_attending_username(attending_username):
     with provided attending.
 
     Returns:
-        string: json dict above
+        string: json string formatted as above
     """
+    # Accept and validate input
+    in_data = attending_username
+    attending = get_attending_from_database(in_data)
+    if(type(attending) == str):
+        return attending, 400
+
+    # External method handlers
+    patList = []
+    pats = attending["patients"]
+    for pat in pats:
+        patList.append(patient_info(pat))
     
-    return None, 500
+
+    # Data output & return
+    return jsonify(patList), 200
+
+
+def patient_info(patient):
+    return None
+
 
 
 def validate_dict_input(in_data, expected_keys):
