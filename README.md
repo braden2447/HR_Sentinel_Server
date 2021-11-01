@@ -31,9 +31,11 @@ A new attending can be posted using the following end route:
 
 The json request should be a dictionary with the format shown below:
 
-```{"attending_username": "Smith.J",
-	"attending_email": "dr_user_id@yourdomain.com",
-	"attending_phone": "###-###-###"}```
+```
+{"attending_username": "Smith.J", 
+ "attending_email": "dr_user_id@yourdomain.com",
+ "attending_phone": "###-###-###"}
+```
 
 Subsequently, a new patient can be posted using the following end route:
 
@@ -41,9 +43,11 @@ Subsequently, a new patient can be posted using the following end route:
 
 The json request should be a dictionary with the format shown below:
 
-```{"patient_id": 1,
-	"attending_username": "Smith.J",
-	"patient_age": 25}```
+```
+{"patient_id": 1,
+ "attending_username": "Smith.J",
+ "patient_age": 25}
+```
 
 Once at least one attending and one corresponding patient have been registered into each database, new patient heart rates can be posted. 
 These posted heart rates are saved within the entry of their corresponding patient under the key "HR_info".
@@ -54,8 +58,10 @@ A new heart rate can be posted using the following end route: and json request a
 
 The json request should be a dictionary with the format shown below:
 
-```{"patient_id": 1,
-	"heart_rate": 75}```
+```
+{"patient_id": 1,
+ "heart_rate": 75}
+```
 
 
 GET requests can be made to the following variable URL end routes to return certain information.
@@ -83,8 +89,10 @@ after a specified time. This POST request should be made to the end route:
 
 The json request should be a dictionary with the following format:
 
-```{"patient_id": 1,
-	"heart_rate_average_since": "2018-03-09 11:00:36"}```
+```
+{"patient_id": 1,
+ "heart_rate_average_since": "2018-03-09 11:00:36"}
+```
 
 ## Server Errors
 
