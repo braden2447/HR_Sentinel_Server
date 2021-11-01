@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
-import datetime as dt
+from datetime import datetime as dt
 
 
 app = Flask(__name__)
@@ -30,7 +30,7 @@ def new_patient():
         "patient_id": int/str,      # id # or # in string
         "attending_username": str,  # Physician name formatted as:
                                       "Lastname.Firstinitial"
-        "patient_age": int,         # in years
+        "patient_age": int/str,     # age # of years or # of years in string
     }
     Method will validate input and post valid patient information
     to server
@@ -41,8 +41,8 @@ def new_patient():
     # Accept and validate input
     in_data = request.get_json()
     expected_values = {"patient_id": [int, str],
-                       "attending_username": [int],
-                       "patient_age": [int]}
+                       "attending_username": [str],
+                       "patient_age": [int, str]}
     error_string, status_code = validate_dict_input(in_data, expected_values)
     if error_string is not True:
         return error_string, status_code
@@ -51,7 +51,7 @@ def new_patient():
     # within attending database
 
     # External method handlers
-    new_patient = add_patient_to_database(str_to_int(in_data["id"]),
+    new_patient = add_patient_to_database(in_data["patient_id"],
                                           in_data["attending_username"],
                                           in_data["patient_age"])
 
@@ -121,10 +121,12 @@ def heart_rate():
     expected_values = {"patient_id": [str, int],
                        "heart_rate": [str, int]}
     error_string, status_code = validate_dict_input(in_data, expected_values)
+    if error_string is not True:
+        return error_string, status_code
 
     # Match patient and update heart rate information
-    patient = get_patient_from_database(in_data["patient_id"])
-    add_hr = add_heart_rate(patient, in_data["heart_rate"])
+    patient = get_patient_from_database(str_to_int(in_data["patient_id"]))
+    add_hr = add_heart_rate(patient, str_to_int(in_data["heart_rate"]))
 
     # Data output and return
     return "Added heart rate information {} "
@@ -157,17 +159,84 @@ def status_pid(patient_id):
 
 @app.route("/api/heart_rate/<patient_id>", methods=["GET"])
 def heart_rate_pid(patient_id):
-    return None, 500
+    """Variable URL route that accepts a patient id and
+    returns a list of all previous heart rate measurements
+    for that patient.
+
+    Method curated by Braden Garrison
+
+    <patient_id> request should contain an existing pid.
+    If no patient is found with a pid matching <patient_id>,
+    an error string indicating no patient found will be returned.
+    This method will be used to view all the previously input
+    heart rates for a specified patient.
+
+    Returns:
+        list: list of integers of saved heart rate values
+        string: error message string will be returned if no
+        matching patient id is found in the database
+    """
+    patient = get_patient_from_database(str_to_int(patient_id))
+    hr_list = prev_heart_rate(patient)
+    return hr_list, 200
 
 
 @app.route("/api/heart_rate/average/<patient_id>", methods=["GET"])
 def heart_rate_avg_pid(patient_id):
-    return None, 500
+    """Variable URL route that accepts a patient id and
+    returns patient's average heart rate across all measurements.
+
+    Method curated by Braden Garrison
+
+    <patient_id> request should contain an existing pid.
+    If no patient is found with a pid matching <patient_id>,
+    an error string indicating no patient found will be returned.
+    This method will be used to view the integer average of all
+    stored heart values for a patient.
+
+    Returns:
+        int: average patient heart rate of all measurements as an integer
+        string: error message string will be returned if no
+        matching patient id is found in the database
+    """
+    patient = get_patient_from_database(patient_id)
+    hr_list = prev_heart_rate(patient)
+    hr_avg = heart_rate_average(hr_list)
+    return hr_avg, 200
 
 
 @app.route("/api/heart_rate/interval_average", methods=["POST"])
 def heart_rate_interval_avg():
-    return None, 500
+    """Accepts json request and posts new patient heart rate
+    to server database.
+
+    Method curated by Braden Garrison
+
+    json request should contain a dict formatted as follows:
+    {
+        "patient_id": int, # Should be patient MRN
+        "heart_rate_average_since": str # Should be formatted in form:
+                                        # "2018-03-09 11:00:36"
+    }
+    This method will be used to calculate and return the heart
+    rate interval average of a specified patient since the given
+    date/time.
+
+    Returns:
+        int: heart rate interval average
+    """
+    in_data = request.get_json()
+    expected_values = {"patient_id": [str, int],
+                       "heart_rate_average_since": [str]}
+    error_string, status_code = validate_dict_input(in_data, expected_values)
+    if error_string is not True:
+        return error_string, status_code
+
+    patient = get_patient_from_database(str_to_int(in_data["patient_id"]))
+    hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
+                                      patient)
+    hr_int_avg = heart_rate_average(hr_interval)
+    return hr_int_avg, 200
 
 
 @app.route("/api/patients/<attending_username>", methods=["GET"])
@@ -266,7 +335,7 @@ def validate_dict_input(in_data, expected_keys):
 def add_patient_to_database(pat_id, att_name, pat_age):
     patient = {
             "id": str_to_int(pat_id),
-            "age": pat_age,
+            "age": str_to_int(pat_age),
             "HR_data": []
         }
     patient_database.append(patient)
@@ -284,7 +353,7 @@ def get_patient_from_database(id_no):
     return patlist[0]
 
 
-def add_attending_to_database(att_name, att_email, att_phone, att_db):
+def add_attending_to_database(att_name, att_email, att_phone):
     attendant = {
             "name": att_name,
             "email": att_email,
@@ -307,11 +376,11 @@ def get_attending_from_database(attendant_name):
 def add_heart_rate(patient, heart_rate):
     timestamp = dt.now()
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    tach = is_tachycardic(heart_rate, patient["patient_age"])
-    hr_info = [{"heart_rate": heart_rate,
-                "status": tach,
-                "timestamp": timestamp}]
-    update_pat = patient.update({"patient_hr": hr_info})
+    tach = is_tachycardic(heart_rate, patient["age"])
+    hr_info = {"heart_rate": heart_rate,
+               "status": tach,
+               "timestamp": timestamp}
+    patient["HR_data"].append(hr_info)
     return hr_info
 
 
@@ -349,6 +418,37 @@ def is_tachycardic(hr, age):
     # if tach == "tachycardic":
     #    create log entry and send email
     return tach
+
+
+def prev_heart_rate(patient):
+    if len(patient["HR_data"]) == 0:
+        return "ERROR: no heart rate values saved for patient"
+    else:
+        hr_list = []
+        for x in patient["HR_data"]:
+            hr_list.append(x["heart_rate"])
+    return hr_list
+
+
+def heart_rate_average(hr_list):
+    total = 0
+    for x in hr_list:
+        total += x
+    hr_avg = int(total/len(hr_list))
+    return hr_avg
+
+
+def heart_rate_interval(interval_time, patient):
+    interval_dt = dt.strptime(interval_time, "%Y-%m-%d %H:%M:%S")
+    hr_interval = []
+    if len(patient["HR_data"]) == 0:
+        return "ERROR: no heart rate values saved for patient"
+    else:
+        for x in patient["HR_data"]:
+            hr_dt = dt.strptime(x["timestamp"], "%Y-%m-%d %H:%M:%S")
+            if hr_dt > interval_dt:
+                hr_interval.append(x["heart_rate"])
+    return hr_interval
 
 
 def str_to_int(value):

@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime as dt
 from sentinel_server import patient_database
 from sentinel_server import attending_database
 
@@ -62,10 +63,26 @@ def test_get_attending_from_database(attendant_name):
     None
 
 
-@pytest.mark.parametrize("patient, heart_rate", [])
-def test_add_heart_rate(patient, heart_rate):
-    from sentinel_server import add_heart_rate
-    None
+@pytest.mark.parametrize("patient, heart_rate, expected", [
+    ({"id": 1, "age": 50, "HR_data": []},
+     60,
+     [{"heart_rate": 60, "status": "not tachycardic",
+      "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}]),
+    ({"id": 2, "age": 20,
+      "HR_data": [{"heart_rate": 60,
+                   "status": "not tachycardic",
+                   "timestamp": "2021-10-31 12:00:00"}]},
+     120,
+     [{"heart_rate": 60, "status": "not tachycardic",
+       "timestamp": "2021-10-31 12:00:00"},
+      {"heart_rate": 120, "status": "tachycardic",
+       "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}])
+     ])
+def test_add_heart_rate(patient, heart_rate, expected):
+    from sentinel_server import add_heart_rate, is_tachycardic
+    add_heart_rate(patient, heart_rate)
+    answer = patient["HR_data"]
+    assert answer == expected
 
 
 @pytest.mark.parametrize("hr, age, expected", [
@@ -84,6 +101,66 @@ def test_add_heart_rate(patient, heart_rate):
 def test_is_tachycardic(hr, age, expected):
     from sentinel_server import is_tachycardic
     answer = is_tachycardic(hr, age)
+    assert answer == expected
+
+
+@pytest.mark.parametrize("patient, expected", [
+    ({"id": 1, "age": 50, "HR_data": []},
+     "ERROR: no heart rate values saved for patient"),
+    ({"id": 2, "age": 20,
+      "HR_data": [{"heart_rate": 60,
+                   "status": "not tachycardic",
+                   "timestamp": "2021-10-31 12:00:00"}]},
+     [60]),
+    ({"id": 3, "age": 40,
+      "HR_data": [{"heart_rate": 60,
+                   "status": "not tachycardic",
+                   "timestamp": "2021-10-31 12:00:00"},
+                  {"heart_rate": 120,
+                   "status": "tachycardic",
+                   "timestamp": "2021-10-31 18:00:00"}]},
+     [60, 120])])
+def test_prev_heart_rate(patient, expected):
+    from sentinel_server import prev_heart_rate
+    answer = prev_heart_rate(patient)
+    assert answer == expected
+
+
+@pytest.mark.parametrize("hr_list, expected", [
+    ([60], 60),
+    ([40, 40, 60, 80, 100], 64),
+    ([75, 79, 82, 101], 84)])
+def test_heart_rate_average(hr_list, expected):
+    from sentinel_server import heart_rate_average
+    answer = heart_rate_average(hr_list)
+    assert answer == expected
+
+
+@pytest.mark.parametrize("interval_time, patient, expected", [
+    ("2020-01-01 06:00:00",
+     {"id": 1, "age": 50, "HR_data": []},
+     "ERROR: no heart rate values saved for patient"),
+    ("2021-10-31 06:00:00",
+     {"id": 2, "age": 20,
+      "HR_data": [{"heart_rate": 60,
+                   "status": "not tachycardic",
+                   "timestamp": "2021-10-30 12:00:00"}]},
+     []),
+    ("2021-10-15 06:00:00",
+     {"id": 3, "age": 20,
+      "HR_data": [{"heart_rate": 60,
+                   "status": "not tachycardic",
+                   "timestamp": "2021-10-01 12:00:00"},
+                  {"heart_rate": 120, "status":
+                   "tachycardic",
+                   "timestamp": "2021-10-20 12:00:00"},
+                  {"heart_rate": 65,
+                   "status": "not tachycardic",
+                   "timestamp": "2021-10-31 12:00:00"}]},
+     [120, 65])])
+def test_heart_rate_interval(interval_time, patient, expected):
+    from sentinel_server import heart_rate_interval
+    answer = heart_rate_interval(interval_time, patient)
     assert answer == expected
 
 
