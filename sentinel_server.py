@@ -135,10 +135,10 @@ def heart_rate():
 
 @app.route("/api/status/<patient_id>", methods=["GET"])
 def status_pid(patient_id):
-    """Accepts json request and posts new patient
-    to server database.
+    """Accepts patient id and returns json containing
+    latest heart rate, status, and timestamp.
 
-    Method curated by _______
+    Method curated by Anuj Som
 
     <patient_id> request should contain an existing pid.
     The output will return a json dict formatted as follows:
@@ -149,11 +149,29 @@ def status_pid(patient_id):
     }
     This method will be used to tell if specified patient
     is tachycardic or not, and the time of the most recent
-    heart rate
+    heart rate. If no recent heart rate reported, returns
+    None
 
     Returns:
         string: Status
+        None: No HR data exists
     """
+    # Accept and validate input
+    in_data = patient_id
+    check = str_to_int(in_data)
+    if(not check[1]):
+        return "Invalid patient ID", 400
+    pid = check[0]
+
+    patient = get_patient_from_database(pid)
+    if(type(patient) == str):
+        return patient, 400
+
+    # External method handlers
+    patData = get_last_heart_rate(patient)
+
+    # Data output & return
+    return jsonify(patData), 200
     return None, 500
 
 
@@ -241,7 +259,53 @@ def heart_rate_interval_avg():
 
 @app.route("/api/patients/<attending_username>", methods=["GET"])
 def patients_attending_username(attending_username):
-    return None, 500
+    """Accepts attending name and returns a list of patients
+    that attending is responsible for by querying the database.
+
+    Method curated by Anuj Som
+
+    <attending_username> request should contain a name formatted as
+    "Lastname.Firstinitial".
+    The output will return a json string formatted as follows:
+    {
+        "patient_id": int,                           # pid
+        "last_heart_rate": int,                      # heart rate
+        "last_time": (str) "2018-03-09 11:00:36",    # datetime string
+        "status":  "tachycardic" | "not tachycardic" # status
+    }
+    This method will return an error if attending not found.
+    Additionally, will return an empty list if no patients associated
+    with provided attending.
+
+    Returns:
+        string: json string formatted as above
+    """
+    # Accept and validate input
+    in_data = attending_username
+    attending = get_attending_from_database(in_data)
+    if(type(attending) == str):
+        return attending, 400
+
+    # External method handlers
+
+    # Assumes all patients within attending list are existing
+    # patients (since patients only added to an attending's list)
+    # with new_patient call
+    patList = []
+    pats = attending["patients"]
+    for pat in pats:
+        pat_info = get_last_heart_rate(pat)
+        if(pat_info is None):
+            newDict = {
+                "patient_id": pat["id"],
+                "last_heart_rate": pat_info["heart_rate"],
+                "last_time": pat_info["timestamp"],
+                "status": pat_info["status"]
+            }
+            patList.append(newDict)
+
+    # Data output & return
+    return jsonify(patList), 200
 
 
 def validate_dict_input(in_data, expected_keys):
@@ -342,6 +406,13 @@ def add_heart_rate(patient, heart_rate):
                "timestamp": timestamp}
     patient["HR_data"].append(hr_info)
     return hr_info
+
+
+def get_last_heart_rate(patient):
+    HR_data = patient["HR_data"]
+    if len(HR_data) == 0:
+        return None
+    return HR_data[-1]
 
 
 def is_tachycardic(hr, age):
