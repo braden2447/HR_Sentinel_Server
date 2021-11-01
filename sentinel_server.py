@@ -167,7 +167,6 @@ def status_pid(patient_id):
     if(type(patient) == str):
         return patient, 400
 
-
     # External method handlers
     patData = get_last_heart_rate(patient)
 
@@ -296,7 +295,7 @@ def patients_attending_username(attending_username):
     pats = attending["patients"]
     for pat in pats:
         pat_info = get_last_heart_rate(pat)
-        if(pat_info == None):
+        if(pat_info is None):
             newDict = {
                 "patient_id": pat["id"],
                 "last_heart_rate": pat_info["heart_rate"],
