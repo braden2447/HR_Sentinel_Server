@@ -135,8 +135,8 @@ def heart_rate():
 
 @app.route("/api/status/<patient_id>", methods=["GET"])
 def status_pid(patient_id):
-    """Accepts json request and posts new patient
-    to server database.
+    """Accepts patient id and returns json containing
+    latest heart rate, status, and timestamp.
 
     Method curated by Anuj Som
 
@@ -154,6 +154,23 @@ def status_pid(patient_id):
     Returns:
         string: Status
     """
+    # Accept and validate input
+    in_data = patient_id
+    check = str_to_int(in_data)
+    if(not check[1]):
+        return "Invalid patient ID", 400
+    pid = check[0]
+
+    patient = get_patient_from_database(pid)
+    if(type(patient) == str):
+        return patient, 400
+
+
+    # External method handlers
+    patData = patient_info(patient)
+
+    # Data output & return
+    return jsonify(patData), 200
     return None, 500
 
 
@@ -272,16 +289,17 @@ def patients_attending_username(attending_username):
     patList = []
     pats = attending["patients"]
     for pat in pats:
-        patList.append(patient_info(pat))
-    
+        pat_info = get_last_heart_rate(pat)
+        newDict = {
+            "patient_id": pat["id"],
+            "last_heart_rate": pat_info["heart_rate"],
+            "last_time": pat_info["timestamp"],
+            "status": pat_info["status"]  
+        }
+        patList.append(newDict)
 
     # Data output & return
     return jsonify(patList), 200
-
-
-def patient_info(patient):
-    return None
-
 
 
 def validate_dict_input(in_data, expected_keys):
@@ -382,6 +400,11 @@ def add_heart_rate(patient, heart_rate):
                "timestamp": timestamp}
     patient["HR_data"].append(hr_info)
     return hr_info
+
+
+def get_last_heart_rate(patient):
+    HR_data = patient["HR_data"]
+    return HR_data[-1]
 
 
 def is_tachycardic(hr, age):
