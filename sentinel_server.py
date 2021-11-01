@@ -149,10 +149,12 @@ def status_pid(patient_id):
     }
     This method will be used to tell if specified patient
     is tachycardic or not, and the time of the most recent
-    heart rate
+    heart rate. If no recent heart rate reported, returns
+    None
 
     Returns:
         string: Status
+        None: No HR data exists
     """
     # Accept and validate input
     in_data = patient_id
@@ -167,7 +169,7 @@ def status_pid(patient_id):
 
 
     # External method handlers
-    patData = patient_info(patient)
+    patData = get_last_heart_rate(patient)
 
     # Data output & return
     return jsonify(patData), 200
@@ -286,17 +288,22 @@ def patients_attending_username(attending_username):
         return attending, 400
 
     # External method handlers
+
+    # Assumes all patients within attending list are existing
+    # patients (since patients only added to an attending's list)
+    # with new_patient call
     patList = []
     pats = attending["patients"]
     for pat in pats:
         pat_info = get_last_heart_rate(pat)
-        newDict = {
-            "patient_id": pat["id"],
-            "last_heart_rate": pat_info["heart_rate"],
-            "last_time": pat_info["timestamp"],
-            "status": pat_info["status"]  
-        }
-        patList.append(newDict)
+        if(pat_info == None):
+            newDict = {
+                "patient_id": pat["id"],
+                "last_heart_rate": pat_info["heart_rate"],
+                "last_time": pat_info["timestamp"],
+                "status": pat_info["status"]
+            }
+            patList.append(newDict)
 
     # Data output & return
     return jsonify(patList), 200
@@ -404,6 +411,8 @@ def add_heart_rate(patient, heart_rate):
 
 def get_last_heart_rate(patient):
     HR_data = patient["HR_data"]
+    if len(HR_data) == 0:
+        return None
     return HR_data[-1]
 
 
