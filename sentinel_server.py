@@ -126,6 +126,8 @@ def heart_rate():
 
     # Match patient and update heart rate information
     patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
+    if (type(patient)) == str:
+        return patient, 400
     add_hr = add_heart_rate(patient, str_to_int(in_data["heart_rate"])[0])
 
     # Data output and return
@@ -172,7 +174,6 @@ def status_pid(patient_id):
 
     # Data output & return
     return jsonify(patData), 200
-    return None, 500
 
 
 @app.route("/api/heart_rate/<patient_id>", methods=["GET"])
@@ -195,6 +196,8 @@ def heart_rate_pid(patient_id):
         matching patient id is found in the database
     """
     patient = get_patient_from_database(str_to_int(patient_id)[0])
+    if (type(patient)) == str:
+        return patient, 400
     hr_list = prev_heart_rate(patient)
     return hr_list, 200
 
@@ -218,6 +221,8 @@ def heart_rate_avg_pid(patient_id):
         matching patient id is found in the database
     """
     patient = get_patient_from_database(patient_id)
+    if (type(patient)) == str:
+        return patient, 400
     hr_list = prev_heart_rate(patient)
     hr_avg = heart_rate_average(hr_list)
     return hr_avg, 200
@@ -251,6 +256,8 @@ def heart_rate_interval_avg():
         return error_string, status_code
 
     patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
+    if (type(patient)) == str:
+        return patient, 400
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
     hr_int_avg = heart_rate_average(hr_interval)
