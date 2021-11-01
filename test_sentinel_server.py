@@ -85,6 +85,28 @@ def test_add_heart_rate(patient, heart_rate, expected):
     assert answer == expected
 
 
+# @pytest.mark.parametrize("patient, heart_rate, expected", [
+#     ({"id": 1, "age": 50, "HR_data": []},
+#      60,
+#      [{"heart_rate": 60, "status": "not tachycardic",
+#       "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}]),
+#     ({"id": 2, "age": 20,
+#       "HR_data": [{"heart_rate": 60,
+#                    "status": "not tachycardic",
+#                    "timestamp": "2021-10-31 12:00:00"}]},
+#      120,
+#      [{"heart_rate": 60, "status": "not tachycardic",
+#        "timestamp": "2021-10-31 12:00:00"},
+#       {"heart_rate": 120, "status": "tachycardic",
+#        "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}])
+#      ])
+# def test_get_last_heart_rate(patient, heart_rate, expected):
+#     from sentinel_server import add_heart_rate, is_tachycardic,
+#       get_last_heart_rate, get_patient_from_database
+#     add_heart_rate(patient, heart_rate)
+#     answer = patient["HR_data"]
+#     assert answer == expected
+
 @pytest.mark.parametrize("hr, age, expected", [
     (100, 1, "not tachycardic"),
     (160, 2, "tachycardic"),
@@ -164,6 +186,19 @@ def test_heart_rate_interval(interval_time, patient, expected):
     assert answer == expected
 
 
-def test_str_to_int():
+@pytest.mark.parametrize("input, expected", [
+    (60, (60, True)),
+    (-4, (-4, True)),
+    (-1, (-1, True)),
+    ("60", (60, True)),
+    ("-4", (-4, True)),
+    ("-1", (-1, True)),
+    ("Python", (-1, False)),
+    ("negative one", (-1, False)),
+    ("Five", (-1, False)),
+    ("", (-1, False)),
+    (100, (100, True))])
+def test_str_to_int(input, expected):
     from sentinel_server import str_to_int
-    None
+    answer = str_to_int(input)
+    assert answer == expected

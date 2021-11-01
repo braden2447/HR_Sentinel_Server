@@ -125,8 +125,8 @@ def heart_rate():
         return error_string, status_code
 
     # Match patient and update heart rate information
-    patient = get_patient_from_database(str_to_int(in_data["patient_id"]))
-    add_hr = add_heart_rate(patient, str_to_int(in_data["heart_rate"]))
+    patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
+    add_hr = add_heart_rate(patient, str_to_int(in_data["heart_rate"])[0])
 
     # Data output and return
     return "Added heart rate information {} "
@@ -194,7 +194,7 @@ def heart_rate_pid(patient_id):
         string: error message string will be returned if no
         matching patient id is found in the database
     """
-    patient = get_patient_from_database(str_to_int(patient_id))
+    patient = get_patient_from_database(str_to_int(patient_id)[0])
     hr_list = prev_heart_rate(patient)
     return hr_list, 200
 
@@ -250,7 +250,7 @@ def heart_rate_interval_avg():
     if error_string is not True:
         return error_string, status_code
 
-    patient = get_patient_from_database(str_to_int(in_data["patient_id"]))
+    patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
     hr_int_avg = heart_rate_average(hr_interval)
@@ -358,8 +358,8 @@ def validate_dict_input(in_data, expected_keys):
 
 def add_patient_to_database(pat_id, att_name, pat_age):
     patient = {
-            "id": str_to_int(pat_id),
-            "age": str_to_int(pat_age),
+            "id": str_to_int(pat_id)[0],
+            "age": str_to_int(pat_age)[0],
             "HR_data": []
         }
     patient_database.append(patient)
