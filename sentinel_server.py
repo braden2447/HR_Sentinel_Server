@@ -469,7 +469,7 @@ def tach_warning(patient, hr):
     logging.warning('Tachycardic heart rate of {} posted for patient ID {}. '
                     'Contacting attending via email: {}'.format(
                      hr, patient["id"], email))
-    # Implement email route
+    # Implement email route using Dr. Ward vm
     return
 
 
