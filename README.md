@@ -18,6 +18,11 @@ This server is running on a virtual machine with the following hostname and port
 
 ```vcm-23156.vm.duke.edu:5000```
 
+If the user decides to run this server locally, first activate the virtual environment containing the packages listed in ```requirements.txt``` 
+then type the following command into the command line:
+
+```python sentinel_server.py```
+
 ## Server Specifications
 
 Upon simply accessing the server without specifying an end route, the server will display a message stating:
@@ -37,6 +42,8 @@ The json request should be a dictionary with the format shown below:
  "attending_phone": "###-###-###"}
 ```
 
+A log entry will be created when a new attending is registered containing the attending username and e-mail. 
+
 Subsequently, a new patient can be posted using the following end route:
 
 ```/api/new_patient```
@@ -49,10 +56,12 @@ The json request should be a dictionary with the format shown below:
  "patient_age": 25}
 ```
 
+A log entry will be created when a new patient is registered containing the patient ID.
+
 Once at least one attending and one corresponding patient have been registered into each database, new patient heart rates can be posted. 
 These posted heart rates are saved within the entry of their corresponding patient under the key "HR_info".
 The server will process each heart rate posting and save the heart rate value, a timestamp associated with the posting, and a  tachycardic/not tachycardic status.
-A new heart rate can be posted using the following end route: and json request as a dictionary as formatted below:
+A new heart rate can be posted using the following end route:
 
 ```/api/heart_rate```
 
@@ -62,6 +71,9 @@ The json request should be a dictionary with the format shown below:
 {"patient_id": 1,
  "heart_rate": 75}
 ```
+
+If the heart rate posted is tachycardic, a log entry will be created containing the patient ID, 
+the heart rate, and the attending physician e-mail.
 
 
 GET requests can be made to the following variable URL end routes to return certain information.
