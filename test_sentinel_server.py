@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime as dt
-from sentinel_server import patient_database
-from sentinel_server import attending_database
+from sentinel_server import patient_database, attending_database
+from testfixtures import LogCapture
 
 
 @pytest.mark.parametrize("input, expected", [
@@ -45,6 +45,15 @@ def test_add_patient_to_database(pat_id, att_name, pat_age):
     None
 
 
+def test_add_attending_to_database_log():
+    from sentinel_server import add_patient_to_database
+    pat, att = initialize_db()
+    with LogCapture() as log_c:
+        add_attending_to_database(pat["id"], pat["attending"],
+                                  pat["age"])
+    log_c.check(('root', 'INFO', 'Registered new patient with ID 1'),)
+
+
 @pytest.mark.parametrize("id_no", [])
 def test_get_patient_from_database(id_no):
     from sentinel_server import get_patient_from_database
@@ -57,6 +66,16 @@ def test_add_attending_to_database(att_name, att_email, att_phone):
     None
 
 
+def test_add_attending_to_database_log():
+    from sentinel_server import add_attending_to_database
+    pat, att = initialize_db()
+    with LogCapture() as log_c:
+        add_attending_to_database(att["name"], att["email"],
+                                  att["phone"])
+    log_c.check(('root', 'INFO', 'Registered new attending physician '
+                 'with username Smith.J and email dr_smith@gmail.com'),)
+
+
 @pytest.mark.parametrize("attendant_name", [])
 def test_get_attending_from_database(attendant_name):
     from sentinel_server import get_attending_from_database
@@ -64,11 +83,11 @@ def test_get_attending_from_database(attendant_name):
 
 
 @pytest.mark.parametrize("patient, heart_rate, expected", [
-    ({"id": 1, "age": 50, "HR_data": []},
+    ({"id": 1, "age": 50, "attending": "Smith.J", "HR_data": []},
      60,
      [{"heart_rate": 60, "status": "not tachycardic",
       "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}]),
-    ({"id": 2, "age": 20,
+    ({"id": 2, "age": 20, "attending": "Smith.J",
       "HR_data": [{"heart_rate": 60,
                    "status": "not tachycardic",
                    "timestamp": "2021-10-31 12:00:00"}]},
@@ -79,7 +98,8 @@ def test_get_attending_from_database(attendant_name):
        "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}])
      ])
 def test_add_heart_rate(patient, heart_rate, expected):
-    from sentinel_server import add_heart_rate, is_tachycardic
+    from sentinel_server import add_heart_rate
+    pat, att = initialize_db()
     add_heart_rate(patient, heart_rate)
     answer = patient["HR_data"]
     assert answer == expected
@@ -124,6 +144,16 @@ def test_is_tachycardic(hr, age, expected):
     from sentinel_server import is_tachycardic
     answer = is_tachycardic(hr, age)
     assert answer == expected
+
+
+def test_tach_warning():
+    from sentinel_server import tach_warning
+    pat, att = initialize_db()
+    with LogCapture() as log_c:
+        tach_warning(pat, 120)
+    log_c.check(('root', 'WARNING', 'Tachycardic heart rate of 120 posted '
+                 'for patient ID 1. Contacting attending via email: '
+                 'dr_smith@gmail.com'),)
 
 
 @pytest.mark.parametrize("patient, expected", [
@@ -202,3 +232,25 @@ def test_str_to_int(input, expected):
     from sentinel_server import str_to_int
     answer = str_to_int(input)
     assert answer == expected
+
+
+def initialize_db():
+    from sentinel_server import (add_attending_to_database,
+                                 add_patient_to_database)
+    patient_database.clear()
+    attending_database.clear()
+    test_pat = {"id": 1,
+                "age": 20,
+                "attending": "Smith.J",
+                "HR_data": []}
+    test_att = {"name": "Smith.J",
+                "email": "dr_smith@gmail.com",
+                "phone": "111-222-3333",
+                "patients": [test_pat]}
+    att = add_attending_to_database(test_att["name"],
+                                    test_att["email"],
+                                    test_att["phone"])
+    pat = add_patient_to_database(test_pat["id"],
+                                  test_pat["attending"],
+                                  test_pat["age"])
+    return pat, att

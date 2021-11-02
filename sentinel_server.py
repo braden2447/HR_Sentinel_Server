@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
 from datetime import datetime as dt
+import logging
 
 
 app = Flask(__name__)
@@ -367,11 +368,13 @@ def add_patient_to_database(pat_id, att_name, pat_age):
     patient = {
             "id": str_to_int(pat_id)[0],
             "age": str_to_int(pat_age)[0],
+            "attending": att_name,
             "HR_data": []
         }
     patient_database.append(patient)
     attendant = get_attending_from_database(att_name)
     attendant["patients"].append(patient)
+    logging.info('Registered new patient with ID {}'.format(pat_id))
     return patient
 
 
@@ -392,6 +395,8 @@ def add_attending_to_database(att_name, att_email, att_phone):
             "patients": []
         }
     attending_database.append(attendant)
+    logging.info('Registered new attending physician with username {} '
+                 'and email {}'.format(att_name, att_email))
     return attendant
 
 
@@ -408,6 +413,8 @@ def add_heart_rate(patient, heart_rate):
     timestamp = dt.now()
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     tach = is_tachycardic(heart_rate, patient["age"])
+    if tach == "tachycardic":
+        tach_warning(patient, heart_rate)
     hr_info = {"heart_rate": heart_rate,
                "status": tach,
                "timestamp": timestamp}
@@ -453,9 +460,17 @@ def is_tachycardic(hr, age):
             tach = "tachycardic"
         else:
             tach = "not tachycardic"
-    # if tach == "tachycardic":
-    #    create log entry and send email
     return tach
+
+
+def tach_warning(patient, hr):
+    att = get_attending_from_database(patient["attending"])
+    email = att["email"]
+    logging.warning('Tachycardic heart rate of {} posted for patient ID {}. '
+                    'Contacting attending via email: {}'.format(
+                     hr, patient["id"], email))
+    # Implement email route using Dr. Ward vm
+    return
 
 
 def prev_heart_rate(patient):
@@ -511,4 +526,6 @@ def str_to_int(value):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename='HR_sentinel_server_log.log',
+                        filemode='w', level=logging.INFO)
     app.run()
