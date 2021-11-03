@@ -196,9 +196,16 @@ def heart_rate_pid(patient_id):
         string: error message string will be returned if no
         matching patient id is found in the database
     """
-    patient = get_patient_from_database(str_to_int(patient_id)[0])
+    in_data = patient_id
+    check = str_to_int(in_data)
+    if(not check[1]):
+        return "Invalid patient ID", 400
+    pid = check[0]
+
+    patient = get_patient_from_database(pid)
     if (type(patient)) == str:
         return patient, 400
+
     hr_list = prev_heart_rate(patient)
     return hr_list, 200
 
@@ -221,9 +228,16 @@ def heart_rate_avg_pid(patient_id):
         string: error message string will be returned if no
         matching patient id is found in the database
     """
-    patient = get_patient_from_database(patient_id)
+    in_data = patient_id
+    check = str_to_int(in_data)
+    if(not check[1]):
+        return "Invalid patient ID", 400
+    pid = check[0]
+
+    patient = get_patient_from_database(pid)
     if (type(patient)) == str:
         return patient, 400
+
     hr_list = prev_heart_rate(patient)
     hr_avg = heart_rate_average(hr_list)
     return hr_avg, 200
@@ -414,7 +428,8 @@ def add_heart_rate(patient, heart_rate):
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     tach = is_tachycardic(heart_rate, patient["age"])
     if tach == "tachycardic":
-        tach_warning(patient, heart_rate)
+        att, email = tach_warning(patient, heart_rate)
+        tach_email(patient, att, email)
     hr_info = {"heart_rate": heart_rate,
                "status": tach,
                "timestamp": timestamp}
@@ -430,6 +445,20 @@ def get_last_heart_rate(patient):
 
 
 def is_tachycardic(hr, age):
+    """Evaluates if posted heart rate is tachycardic
+
+    Tachycardia is defined as a heart rate that is above normal resting
+    rate. Specific tachycardic values are dependent upon patient age. More
+    info about tachycardia and its diagnosis can be found at:
+    https://en.wikipedia.org/wiki/Tachycardia
+
+    Args:
+        hr (int): accepts posted heart rate as an int
+        age (int): accepts patient age as an int
+
+    Returns:
+        str: string describing result - "tachycardic" or "not tachycardic"
+    """
     if 1 <= age < 3:
         if hr > 151:
             tach = "tachycardic"
@@ -464,16 +493,76 @@ def is_tachycardic(hr, age):
 
 
 def tach_warning(patient, hr):
+    """Creates log entry upon server receiving tachycardic HR post
+
+    Tachycardic heart rate values are defined in the is_tachycardic
+    function. Any heart rate values exceeding the specified range for
+    the patient age will create a warning-level log entry.
+
+    Args:
+        patient (dict): Accepts patient dict containing all patient info
+        hr (int): Accepts posted heart rate as integer
+
+    Returns:
+        dict: returns attending dictionary containing all attending info
+        str: returns attending email
+    """
     att = get_attending_from_database(patient["attending"])
     email = att["email"]
     logging.warning('Tachycardic heart rate of {} posted for patient ID {}. '
                     'Contacting attending via email: {}'.format(
                      hr, patient["id"], email))
-    # Implement email route using Dr. Ward vm
+    return att, email
+
+
+def tach_email(patient, att, email):
+    """Emails attending upon server receiving tachycardic HR post
+
+    This server not only logs any events of tachycardic HR postings
+    but also emails the attending on file for that patient. The email
+    will alert the attending of the patient ID associated with the
+    HR posting.
+
+    Args:
+        patient (dict): accepts patient dict containing all patient info
+        att (dict): accepts attending dict containing all attending info
+        email (str): accepts attending email as string
+
+    Returns:
+        int: status code returned from interaction with email server
+        str: status text describing successful email or error message
+    """
+    path = "http://vcm-7631.vm.duke.edu:5007/hrss/send_email"
+    email_subj = 'WARNING: Tachycardic HR Detected'
+    att_name_list = att["name"].split('.')
+    att_last_name = att_name_list[0]
+    email_msg = 'Dear Dr. {},\n'
+    'The HR sentinel server has just detected a tachycardic '
+    'heart rate for your patient with ID {}. Please tend to '
+    'them as soon as possible.'.format(att_last_name,
+                                       patient["id"])
+    email_req = {"from_email": "HR_sentinel@gmail.com",
+                 "to_email": email,
+                 "subject": email_subj,
+                 "content": email_msg}
+    r = requests.post(path, json=email_req)
+    print(r.status_code)
+    print(r.text)
     return
 
 
 def prev_heart_rate(patient):
+    """Gives list of all posted heart rates for a patient
+
+    The accepted patient database is analyzed to produce a list of
+    all previously posted heart rates for that patient.
+
+    Args:
+        patient (dict): accepts patient dict containing all patient info
+
+    Returns:
+        list: all heart rate values stored in specified patient database
+    """
     if len(patient["HR_data"]) == 0:
         return "ERROR: no heart rate values saved for patient"
     else:
@@ -484,6 +573,18 @@ def prev_heart_rate(patient):
 
 
 def heart_rate_average(hr_list):
+    """Averages posted heart rates of a patient
+
+    The accepted heart rate list of a specific patient is iterated
+    through to produce a total which is then divided by the list
+    length to produce the heart rate average.
+
+    Args:
+        hr_list (list): list of all posted heart rates of a patient
+
+    Returns:
+        int: rounded average heart rate value for a patient
+    """
     total = 0
     for x in hr_list:
         total += x
@@ -492,6 +593,20 @@ def heart_rate_average(hr_list):
 
 
 def heart_rate_interval(interval_time, patient):
+    """Gives list of heart rates posted after a specified time
+
+    Iterates through patient heart rate values to determine which
+    heart rates were posted after the specified interval time,
+    then returns a list of those heart rates to be averaged later.
+
+    Args:
+        interval_time (str): posted interval time in format
+                             "Y-%m-%d %H:%M%S"
+        patient (dict): accepts patient dict containing all patient info
+
+    Returns:
+        list: heart rate list containing all heart rates posted after interval
+    """
     interval_dt = dt.strptime(interval_time, "%Y-%m-%d %H:%M:%S")
     hr_interval = []
     if len(patient["HR_data"]) == 0:
