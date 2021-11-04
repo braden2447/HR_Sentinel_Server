@@ -1,3 +1,4 @@
+from typing import Type
 from flask import Flask, request, jsonify
 import requests
 from datetime import datetime as dt
@@ -387,7 +388,11 @@ def add_patient_to_database(pat_id, att_name, pat_age):
         }
     patient_database.append(patient)
     attendant = get_attending_from_database(att_name)
-    attendant["patients"].append(patient)
+    try:
+        attendant["patients"].append(patient)
+    except TypeError:
+        logging.error('ID {} unable to be added to DB'.format(pat_id))
+        return patient
     logging.info('Registered new patient with ID {}'.format(pat_id))
     return patient
 
@@ -397,7 +402,7 @@ def get_patient_from_database(id_no):
     if len(patlist) == 0:
         return "ERROR: no patient with id {} in database".format(id_no)
     if len(patlist) > 1:
-        return "ERROR: patient id not unique identifier"
+        return "ERROR: patient id ({}) not unique identifier".format(id_no)
     return patlist[0]
 
 
@@ -517,6 +522,8 @@ def tach_warning(patient, hr):
 
 def tach_email(patient, att, email):
     """Emails attending upon server receiving tachycardic HR post
+
+    Method curated by Braden Garrison
 
     This server not only logs any events of tachycardic HR postings
     but also emails the attending on file for that patient. The email
