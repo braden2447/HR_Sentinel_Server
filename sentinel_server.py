@@ -290,9 +290,10 @@ def heart_rate_interval_avg():
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
     if type(hr_interval) == str:
-        hr_int_avg = "ERROR: no heart rate values in desired time range"
-    hr_int_avg = heart_rate_average(hr_interval)
-    return hr_int_avg, 200
+        return "ERROR: no heart rate values in desired time range", 400
+    else:
+        hr_int_avg = heart_rate_average(hr_interval)
+    return jsonify(hr_int_avg), 200
 
 
 @app.route("/api/patients/<attending_username>", methods=["GET"])
