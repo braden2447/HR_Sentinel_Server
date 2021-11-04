@@ -278,19 +278,19 @@ def heart_rate_interval_avg():
     if error_string is not True:
         return error_string, status_code
 
-    print("Check 1\n")
+    # print("Check 1\n")
 
     pat_id = str_to_int(in_data["patient_id"])[0]
     patient = get_patient_from_database(pat_id)
     if (type(patient)) == str:
         return patient, 400
 
-    print("Check 2\n")
+    # print("Check 2\n")
 
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
     if type(hr_interval) == str:
-        return "ERROR: no heart rate values in desired time range", 400
+        return hr_interval, 400
     else:
         hr_int_avg = heart_rate_average(hr_interval)
     return jsonify(hr_int_avg), 200
@@ -314,13 +314,15 @@ def patients_attending_username(attending_username):
     }
     This method will return an error if attending not found.
     Additionally, will return an empty list if no patients associated
-    with provided attending.
+    with provided attending. Furthermore, if no HR data was ever posted,
+    last_heart_rate, last_time, and status will be empty lists.
 
     Returns:
         string: json string formatted as above
     """
     # Accept and validate input
     in_data = attending_username
+    print(in_data)
     attending = get_attending_from_database(in_data)
     if(type(attending) == str):
         return attending, 400
@@ -334,16 +336,24 @@ def patients_attending_username(attending_username):
     # with new_patient call
     patList = []
     pats = attending["patients"]
+
     for pat in pats:
         pat_info = get_last_heart_rate(pat)
-        if(pat_info is None):
+        if(len(pat_info) != 0):
             newDict = {
                 "patient_id": pat["id"],
                 "last_heart_rate": pat_info["heart_rate"],
                 "last_time": pat_info["timestamp"],
                 "status": pat_info["status"]
             }
-            patList.append(newDict)
+        else:
+            newDict = {
+                "patient_id": pat["id"],
+                "last_heart_rate": [],
+                "last_time": [],
+                "status": []
+            }
+        patList.append(newDict)
 
     # Data output & return
     return jsonify(patList), 200
@@ -473,14 +483,17 @@ def add_heart_rate(patient, heart_rate):
 
 
 def get_last_heart_rate(patient):
+
     HR_data = patient["HR_data"]
     if len(HR_data) == 0:
-        return None
+        return []
     return HR_data[-1]
 
 
 def is_tachycardic(hr, age):
     """Evaluates if posted heart rate is tachycardic
+
+    Method curated by Braden Garrison
 
     Tachycardia is defined as a heart rate that is above normal resting
     rate. Specific tachycardic values are dependent upon patient age. More
@@ -529,6 +542,8 @@ def is_tachycardic(hr, age):
 
 def tach_warning(patient, hr):
     """Creates log entry upon server receiving tachycardic HR post
+
+    Method curated by Braden Garrison
 
     Tachycardic heart rate values are defined in the is_tachycardic
     function. Any heart rate values exceeding the specified range for
@@ -614,6 +629,8 @@ def prev_heart_rate(patient):
 def heart_rate_average(hr_list):
     """Averages posted heart rates of a patient
 
+    Method curated by Braden Garrison
+
     The accepted heart rate list of a specific patient is iterated
     through to produce a total which is then divided by the list
     length to produce the heart rate average.
@@ -635,6 +652,8 @@ def heart_rate_average(hr_list):
 
 def heart_rate_interval(interval_time, patient):
     """Gives list of heart rates posted after a specified time
+
+    Method curated by Braden Garrison
 
     Iterates through patient heart rate values to determine which
     heart rates were posted after the specified interval time,
@@ -664,6 +683,8 @@ def str_to_int(value):
     """Converts an input string
     into int value, or returns input
     if input is already int
+
+    Method curated by Anuj Som
 
     Args:
         value (int, str): Accepts an int or string to convert to int

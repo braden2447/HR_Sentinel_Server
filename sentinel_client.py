@@ -18,6 +18,13 @@ r = requests.post(path + "/new_attending", json=attending2)
 print(r.status_code)
 print(r.text)
 
+attending3 = {"attending_username": "Som.A",
+              "attending_email": "as989@duke.edu",
+              "attending_phone": "727-233-1234"}
+r = requests.post(path + "/new_attending", json=attending3)
+print(r.status_code)
+print(r.text)
+
 # Test new patient route
 print("Test new patient route\n")
 patient1 = {"patient_id": 1,

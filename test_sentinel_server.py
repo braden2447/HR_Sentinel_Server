@@ -3,6 +3,7 @@ from datetime import datetime as dt
 from sentinel_server import get_last_heart_rate, get_patient_from_database
 from sentinel_server import patient_database
 from sentinel_server import attending_database
+from testfixtures import LogCapture
 
 
 @pytest.mark.parametrize("input, expected", [
@@ -65,10 +66,20 @@ def test_add_patient_to_database(pat_id, att_name, pat_age):
     assert added_patient == testPatient
 
 
+def test_add_patient_to_database_log():
+    from sentinel_server import add_patient_to_database
+    pat, att = initialize_db()
+    with LogCapture() as log_c:
+        add_patient_to_database(pat["id"], pat["attending"],
+                                pat["age"])
+    log_c.check(('root', 'INFO', 'Registered new patient with ID 1'),)
+
+
 def test_get_patient_from_database():
     from sentinel_server import get_patient_from_database
     from sentinel_server import patient_database
 
+    initialize_db()
     for patient in patient_database:
         assert patient == get_patient_from_database(patient["id"])
 
@@ -92,6 +103,16 @@ def test_add_attending_to_database(att_name, att_email, att_phone):
     assert test_attending in pseudo_att_db
 
 
+def test_add_attending_to_database_log():
+    from sentinel_server import add_attending_to_database
+    pat, att = initialize_db()
+    with LogCapture() as log_c:
+        add_attending_to_database(att["name"], att["email"],
+                                  att["phone"])
+    log_c.check(('root', 'INFO', 'Registered new attending physician '
+                 'with username Smith.J and email dr_smith@gmail.com'),)
+
+
 def test_get_attending_from_database():
     from sentinel_server import get_attending_from_database
     from sentinel_server import attending_database
@@ -99,16 +120,19 @@ def test_get_attending_from_database():
     # for c in attending_database:
     #     print(c)
 
+    initialize_db()
     for attendant in attending_database:
         assert attendant == get_attending_from_database(attendant["name"])
 
 
-def tach_email(patient, att, email):
-    None
-
-
 def tach_warning(patient, hr):
-    None
+    from sentinel_server import tach_warning
+    pat, att = initialize_db()
+    with LogCapture() as log_c:
+        tach_warning(pat, 120)
+    log_c.check(('root', 'WARNING', 'Tachycardic heart rate of 120 posted '
+                 'for patient ID 1. Contacting attending via email: '
+                 'dr_smith@gmail.com'),)
 
 
 @pytest.mark.parametrize("patient, heart_rate, expected", [
@@ -141,9 +165,10 @@ def test_get_last_heart_rate():
     from sentinel_server import add_heart_rate
     from sentinel_server import get_patient_from_database
 
-    id_no = 650
+    initialize_db()
+    id_no = 1
     patient = get_patient_from_database(id_no)
-    assert get_last_heart_rate(patient) is None
+    assert get_last_heart_rate(patient) == []
 
     add_heart_rate(patient, 60)
     expected = {"heart_rate": 60, "status": "not tachycardic",
@@ -260,3 +285,25 @@ def clear_patient_database():
 
 def clear_attending_database():
     attending_database = []
+
+
+def initialize_db():
+    from sentinel_server import (add_attending_to_database,
+                                 add_patient_to_database)
+    patient_database.clear()
+    attending_database.clear()
+    test_pat = {"id": 1,
+                "age": 20,
+                "attending": "Smith.J",
+                "HR_data": []}
+    test_att = {"name": "Smith.J",
+                "email": "dr_smith@gmail.com",
+                "phone": "111-222-3333",
+                "patients": [test_pat]}
+    att = add_attending_to_database(test_att["name"],
+                                    test_att["email"],
+                                    test_att["phone"])
+    pat = add_patient_to_database(test_pat["id"],
+                                  test_pat["attending"],
+                                  test_pat["age"])
+    return pat, att
