@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime as dt
-from sentinel_server import patient_database
+from sentinel_server import get_last_heart_rate, get_patient_from_database, patient_database
 from sentinel_server import attending_database
 
 
@@ -73,7 +73,7 @@ def test_get_patient_from_database():
 
 @pytest.mark.parametrize("att_name, att_email, att_phone", [
     ("Evans.R", "Evans.R@duke.edu", "123-456-7890"),
-    ("McDonald.R", "RonMcDon@mcd.com", "123-456-7890"),
+    ("McDonald.S", "RonMcDon@mcd.com", "123-456-7890"),
     ("Gates.B", "gates@outlook.com", "123-456-7890")
 ])
 def test_add_attending_to_database(att_name, att_email, att_phone):
@@ -89,10 +89,15 @@ def test_add_attending_to_database(att_name, att_email, att_phone):
     assert test_attending in pseudo_att_db
 
 
-@pytest.mark.parametrize("attendant_name", [])
-def test_get_attending_from_database(attendant_name):
+def test_get_attending_from_database():
     from sentinel_server import get_attending_from_database
-    None
+    from sentinel_server import attending_database
+
+    # for c in attending_database:
+    #     print(c)
+
+    for attendant in attending_database:
+        assert attendant == get_attending_from_database(attendant["name"])
 
 
 def tach_email(patient, att, email):
@@ -128,27 +133,27 @@ def test_add_heart_rate(patient, heart_rate, expected):
     assert answer == expected
 
 
-# @pytest.mark.parametrize("patient, heart_rate, expected", [
-#     ({"id": 1, "age": 50, "HR_data": []},
-#      60,
-#      [{"heart_rate": 60, "status": "not tachycardic",
-#       "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}]),
-#     ({"id": 2, "age": 20,
-#       "HR_data": [{"heart_rate": 60,
-#                    "status": "not tachycardic",
-#                    "timestamp": "2021-10-31 12:00:00"}]},
-#      120,
-#      [{"heart_rate": 60, "status": "not tachycardic",
-#        "timestamp": "2021-10-31 12:00:00"},
-#       {"heart_rate": 120, "status": "tachycardic",
-#        "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}])
-#      ])
-# def test_get_last_heart_rate(patient, heart_rate, expected):
-#     from sentinel_server import add_heart_rate, is_tachycardic,
-#       get_last_heart_rate, get_patient_from_database
-#     add_heart_rate(patient, heart_rate)
-#     answer = patient["HR_data"]
-#     assert answer == expected
+def test_get_last_heart_rate():
+    from sentinel_server import get_last_heart_rate
+    from sentinel_server import add_heart_rate
+    from sentinel_server import get_patient_from_database
+
+    id_no = 1
+    patient = get_patient_from_database(id_no)
+    assert get_last_heart_rate(patient) == None
+
+    add_heart_rate(patient, 60)
+    expected = {"heart_rate": 60, "status": "not tachycardic",
+      "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}
+    assert get_last_heart_rate(patient) == expected
+
+    add_heart_rate(patient, 120)
+    expected = {"heart_rate": 120, "status": "tachycardic",
+       "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}
+    assert get_last_heart_rate(patient) == expected
+
+    
+
 
 @pytest.mark.parametrize("hr, age, expected", [
     (100, 1, "not tachycardic"),
@@ -245,3 +250,12 @@ def test_str_to_int(input, expected):
     from sentinel_server import str_to_int
     answer = str_to_int(input)
     assert answer == expected
+
+
+# Helper methods while testing
+def clear_patient_database():
+    patient_database = []
+
+
+def clear_attending_database():
+    attending_database = []

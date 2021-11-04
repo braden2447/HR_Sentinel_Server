@@ -647,6 +647,14 @@ def str_to_int(value):
     return (int_val, True)
 
 
+def clear_patient_database():
+    patient_database = []
+
+
+def clear_attending_database():
+    attending_database = []
+
+
 if __name__ == "__main__":
     logging.basicConfig(filename='HR_sentinel_server_log.log',
                         filemode='w', level=logging.INFO)
