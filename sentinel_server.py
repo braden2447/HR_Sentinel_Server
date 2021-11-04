@@ -290,9 +290,10 @@ def heart_rate_interval_avg():
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
     if type(hr_interval) == str:
-        hr_int_avg = "ERROR: no heart rate values in desired time range"
-    hr_int_avg = heart_rate_average(hr_interval)
-    return hr_int_avg, 200
+        return hr_interval, 400
+    else:
+        hr_int_avg = heart_rate_average(hr_interval)
+    return jsonify(hr_int_avg), 200
 
 
 @app.route("/api/patients/<attending_username>", methods=["GET"])
@@ -734,7 +735,7 @@ def prev_heart_rate(patient):
 def heart_rate_average(hr_list):
     """Averages posted heart rates of a patient
 
-    Method curaged by Braden Garrison
+    Method curated by Braden Garrison
 
     The accepted heart rate list of a specific patient is iterated
     through to produce a total which is then divided by the list
@@ -788,6 +789,8 @@ def str_to_int(value):
     """Converts an input string
     into int value, or returns input
     if input is already int
+
+    Method curated by Anuj Som
 
     Args:
         value (int, str): Accepts an int or string to convert to int

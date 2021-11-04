@@ -1,0 +1,18 @@
+INFO:werkzeug: * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+INFO:root:Registered new attending physician with username Smith.J and email jsmith@gmail.com
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:18] "POST /api/new_attending HTTP/1.1" 200 -
+INFO:root:Registered new attending physician with username McDonald.R and email notlovinit@gmail.com
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:18] "POST /api/new_attending HTTP/1.1" 200 -
+INFO:root:Registered new patient with ID 1
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:18] "POST /api/new_patient HTTP/1.1" 200 -
+INFO:root:Registered new patient with ID 2
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:18] "POST /api/new_patient HTTP/1.1" 200 -
+INFO:root:Registered new patient with ID 3
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:18] "POST /api/new_patient HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:18] "POST /api/heart_rate HTTP/1.1" 200 -
+WARNING:root:Tachycardic heart rate of 140 posted for patient ID 1. Contacting attending via email: jsmith@gmail.com
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:19] "POST /api/heart_rate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:19] "POST /api/heart_rate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:19] "POST /api/heart_rate/interval_average HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:19] "POST /api/heart_rate/interval_average HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [03/Nov/2021 22:47:19] "[31m[1mPOST /api/heart_rate/interval_average HTTP/1.1[0m" 400 -
