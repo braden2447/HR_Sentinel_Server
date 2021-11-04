@@ -143,7 +143,7 @@ def test_get_last_heart_rate():
 
     id_no = 650
     patient = get_patient_from_database(id_no)
-    assert get_last_heart_rate(patient) is []
+    assert get_last_heart_rate(patient) == []
 
     add_heart_rate(patient, 60)
     expected = {"heart_rate": 60, "status": "not tachycardic",
