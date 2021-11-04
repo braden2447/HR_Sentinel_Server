@@ -136,9 +136,10 @@ def heart_rate():
     add_hr = add_heart_rate(patient, hr_info)
 
     # Data output and return
-    msg =  "Added heart rate information {} for ".format(add_hr)
+    msg = "Added heart rate information {} for ".format(add_hr)
     msg += "patient id {}".format(in_data["patient_id"])
     return msg, 200
+
 
 @app.route("/api/status/<patient_id>", methods=["GET"])
 def status_pid(patient_id):
@@ -157,11 +158,11 @@ def status_pid(patient_id):
     This method will be used to tell if specified patient
     is tachycardic or not, and the time of the most recent
     heart rate. If no recent heart rate reported, returns
-    None
+    null
 
     Returns:
         string: Status
-        None: No HR data exists
+        Null: No HR data exists
     """
     # Accept and validate input
     in_data = patient_id
@@ -277,16 +278,20 @@ def heart_rate_interval_avg():
     if error_string is not True:
         return error_string, status_code
 
-    patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
+    print("Check 1\n")
+
+    pat_id = str_to_int(in_data["patient_id"])[0]
+    patient = get_patient_from_database(pat_id)
     if (type(patient)) == str:
         return patient, 400
-    
+
+    print("Check 2\n")
+
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
-    if len(hr_interval) == 0:
+    if type(hr_interval) == str:
         hr_int_avg = "ERROR: no heart rate values in desired time range"
-    else:
-        hr_int_avg = heart_rate_average(hr_interval)
+    hr_int_avg = heart_rate_average(hr_interval)
     return hr_int_avg, 200
 
 
@@ -318,6 +323,8 @@ def patients_attending_username(attending_username):
     attending = get_attending_from_database(in_data)
     if(type(attending) == str):
         return attending, 400
+    if(attending not in attending_database):
+        return "ERROR: Attending not in database", 400
 
     # External method handlers
 
@@ -617,6 +624,8 @@ def heart_rate_average(hr_list):
         int: rounded average heart rate value for a patient
     """
     total = 0
+    if len(hr_list) == 0:
+        return 0
     for x in hr_list:
         total += x
     hr_avg = int(total/len(hr_list))
@@ -641,7 +650,7 @@ def heart_rate_interval(interval_time, patient):
     interval_dt = dt.strptime(interval_time, "%Y-%m-%d %H:%M:%S")
     hr_interval = []
     if len(patient["HR_data"]) == 0:
-        return []
+        return "ERROR: no heart rate values saved for patient"
     else:
         for x in patient["HR_data"]:
             hr_dt = dt.strptime(x["timestamp"], "%Y-%m-%d %H:%M:%S")
