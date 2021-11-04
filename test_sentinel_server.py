@@ -71,10 +71,22 @@ def test_get_patient_from_database():
         assert patient == get_patient_from_database(patient["id"])
 
 
-@pytest.mark.parametrize("att_name, att_email, att_phone", [])
+@pytest.mark.parametrize("att_name, att_email, att_phone", [
+    ("Evans.R", "Evans.R@duke.edu", "123-456-7890"),
+    ("McDonald.R", "RonMcDon@mcd.com", "123-456-7890"),
+    ("Gates.B", "gates@outlook.com", "123-456-7890")
+])
 def test_add_attending_to_database(att_name, att_email, att_phone):
     from sentinel_server import add_attending_to_database
-    None
+    pseudo_att_db = []
+    test_attending = {
+            "name": att_name,
+            "email": att_email,
+            "phone": att_phone,
+            "patients": []
+        }
+    pseudo_att_db.append(add_attending_to_database(att_name, att_email, att_phone))
+    assert test_attending in pseudo_att_db
 
 
 @pytest.mark.parametrize("attendant_name", [])
