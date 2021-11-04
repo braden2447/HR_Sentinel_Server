@@ -224,6 +224,7 @@ def heart_rate_avg_pid(patient_id):
     <patient_id> request should contain an existing pid.
     If no patient is found with a pid matching <patient_id>,
     an error string indicating no patient found will be returned.
+    If no heart rate data is found, the average will deafult to 0.
     This method will be used to view the integer average of all
     stored heart values for a patient.
 
@@ -243,8 +244,10 @@ def heart_rate_avg_pid(patient_id):
         return patient, 400
 
     hr_list = prev_heart_rate(patient)
+    if(type(hr_list) == str):
+        return hr_list, 400
     hr_avg = heart_rate_average(hr_list)
-    return hr_avg, 200
+    return jsonify(hr_avg), 200
 
 
 @app.route("/api/heart_rate/interval_average", methods=["POST"])
@@ -277,9 +280,13 @@ def heart_rate_interval_avg():
     patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
     if (type(patient)) == str:
         return patient, 400
+    
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
-    hr_int_avg = heart_rate_average(hr_interval)
+    if len(hr_interval) == 0:
+        hr_int_avg = "ERROR: no heart rate values in desired time range"
+    else:
+        hr_int_avg = heart_rate_average(hr_interval)
     return hr_int_avg, 200
 
 
@@ -634,7 +641,7 @@ def heart_rate_interval(interval_time, patient):
     interval_dt = dt.strptime(interval_time, "%Y-%m-%d %H:%M:%S")
     hr_interval = []
     if len(patient["HR_data"]) == 0:
-        return "ERROR: no heart rate values saved for patient"
+        return []
     else:
         for x in patient["HR_data"]:
             hr_dt = dt.strptime(x["timestamp"], "%Y-%m-%d %H:%M:%S")
