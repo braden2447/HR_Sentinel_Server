@@ -561,6 +561,8 @@ def tach_email(patient, att, email):
 def prev_heart_rate(patient):
     """Gives list of all posted heart rates for a patient
 
+    Method curated by Braden Garrison
+
     The accepted patient database is analyzed to produce a list of
     all previously posted heart rates for that patient.
 
@@ -645,14 +647,6 @@ def str_to_int(value):
     except ValueError:
         return (-1, False)
     return (int_val, True)
-
-
-def clear_patient_database():
-    patient_database = []
-
-
-def clear_attending_database():
-    attending_database = []
 
 
 if __name__ == "__main__":

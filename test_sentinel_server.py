@@ -1,6 +1,7 @@
 import pytest
 from datetime import datetime as dt
-from sentinel_server import get_last_heart_rate, get_patient_from_database, patient_database
+from sentinel_server import get_last_heart_rate, get_patient_from_database
+from sentinel_server import patient_database
 from sentinel_server import attending_database
 
 
@@ -43,7 +44,8 @@ def test_validate_dict_input(input, expected):
     (1, "Evans.C", 34),
     (2, "Mike.H", 31),
     (3, "McDonald.R", "29"),
-    ("4", "Stacy.R", 66)
+    ("4", "Stacy.R", 66),
+    ("650", "Som.A", 20)
 ])
 def test_add_patient_to_database(pat_id, att_name, pat_age):
     from sentinel_server import add_patient_to_database
@@ -85,7 +87,8 @@ def test_add_attending_to_database(att_name, att_email, att_phone):
             "phone": att_phone,
             "patients": []
         }
-    pseudo_att_db.append(add_attending_to_database(att_name, att_email, att_phone))
+    pseudo_att_db.append(add_attending_to_database(att_name,
+                                                   att_email, att_phone))
     assert test_attending in pseudo_att_db
 
 
@@ -138,21 +141,19 @@ def test_get_last_heart_rate():
     from sentinel_server import add_heart_rate
     from sentinel_server import get_patient_from_database
 
-    id_no = 1
+    id_no = 650
     patient = get_patient_from_database(id_no)
-    assert get_last_heart_rate(patient) == None
+    assert get_last_heart_rate(patient) is None
 
     add_heart_rate(patient, 60)
     expected = {"heart_rate": 60, "status": "not tachycardic",
-      "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}
+                "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}
     assert get_last_heart_rate(patient) == expected
 
     add_heart_rate(patient, 120)
     expected = {"heart_rate": 120, "status": "tachycardic",
-       "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}
+                "timestamp": (dt.now()).strftime("%Y-%m-%d %H:%M:%S")}
     assert get_last_heart_rate(patient) == expected
-
-    
 
 
 @pytest.mark.parametrize("hr, age, expected", [
@@ -252,7 +253,7 @@ def test_str_to_int(input, expected):
     assert answer == expected
 
 
-# Helper methods while testing
+# Helper methods to call while testing
 def clear_patient_database():
     patient_database = []
 
