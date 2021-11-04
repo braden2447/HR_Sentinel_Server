@@ -430,9 +430,9 @@ def add_patient_to_database(pat_id, att_name, pat_age):
 def get_patient_from_database(id_no):
     patlist = [x for x in patient_database if x["id"] == id_no]
     if len(patlist) == 0:
-        return "ERROR: No patient with id {} in database".format(id_no)
+        return "ERROR: no patient with id {} in database".format(id_no)
     if len(patlist) > 1:
-        return "ERROR: Patient id ({}) not unique identifier".format(id_no)
+        return "ERROR: patient id ({}) not unique identifier".format(id_no)
     return patlist[0]
 
 
@@ -452,9 +452,9 @@ def add_attending_to_database(att_name, att_email, att_phone):
 def get_attending_from_database(attendant_name):
     attlist = [x for x in attending_database if x["name"] == attendant_name]
     if len(attlist) == 0:
-        return "ERROR: No attending in database"
+        return "ERROR: no attending in database"
     if len(attlist) > 1:
-        return "ERROR: Name not unique identifier"
+        return "ERROR: name not unique identifier"
     return attlist[0]
 
 
@@ -608,7 +608,7 @@ def prev_heart_rate(patient):
         list: all heart rate values stored in specified patient database
     """
     if len(patient["HR_data"]) == 0:
-        return "ERROR: No heart rate values saved for patient"
+        return "ERROR: no heart rate values saved for patient"
     else:
         hr_list = []
         for x in patient["HR_data"]:
@@ -660,7 +660,7 @@ def heart_rate_interval(interval_time, patient):
     interval_dt = dt.strptime(interval_time, "%Y-%m-%d %H:%M:%S")
     hr_interval = []
     if len(patient["HR_data"]) == 0:
-        return "ERROR: No heart rate values saved for patient"
+        return "ERROR: no heart rate values saved for patient"
     else:
         for x in patient["HR_data"]:
             hr_dt = dt.strptime(x["timestamp"], "%Y-%m-%d %H:%M:%S")
