@@ -278,14 +278,14 @@ def heart_rate_interval_avg():
     if error_string is not True:
         return error_string, status_code
 
-    print("Check 1\n")
+    # print("Check 1\n")
 
     pat_id = str_to_int(in_data["patient_id"])[0]
     patient = get_patient_from_database(pat_id)
     if (type(patient)) == str:
         return patient, 400
 
-    print("Check 2\n")
+    # print("Check 2\n")
 
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
@@ -313,13 +313,15 @@ def patients_attending_username(attending_username):
     }
     This method will return an error if attending not found.
     Additionally, will return an empty list if no patients associated
-    with provided attending.
+    with provided attending. Furthermore, if no HR data was ever posted,
+    last_heart_rate, last_time, and status will be empty lists.
 
     Returns:
         string: json string formatted as above
     """
     # Accept and validate input
     in_data = attending_username
+    print(in_data)
     attending = get_attending_from_database(in_data)
     if(type(attending) == str):
         return attending, 400
@@ -333,16 +335,24 @@ def patients_attending_username(attending_username):
     # with new_patient call
     patList = []
     pats = attending["patients"]
+
     for pat in pats:
         pat_info = get_last_heart_rate(pat)
-        if(pat_info is None):
+        if(len(pat_info) != 0):
             newDict = {
                 "patient_id": pat["id"],
                 "last_heart_rate": pat_info["heart_rate"],
                 "last_time": pat_info["timestamp"],
                 "status": pat_info["status"]
             }
-            patList.append(newDict)
+        else:
+            newDict = {
+                "patient_id": pat["id"],
+                "last_heart_rate": [],
+                "last_time": [],
+                "status": []
+            }
+        patList.append(newDict)
 
     # Data output & return
     return jsonify(patList), 200
@@ -474,7 +484,7 @@ def add_heart_rate(patient, heart_rate):
 def get_last_heart_rate(patient):
     HR_data = patient["HR_data"]
     if len(HR_data) == 0:
-        return None
+        return []
     return HR_data[-1]
 
 
