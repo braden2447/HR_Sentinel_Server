@@ -127,15 +127,18 @@ def heart_rate():
         return error_string, status_code
 
     # Match patient and update heart rate information
-    patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
+    pat_id = str_to_int(in_data["patient_id"])[0]
+    hr_info = str_to_int(in_data["heart_rate"])[0]
+    patient = get_patient_from_database(pat_id)
     if (type(patient)) == str:
         return patient, 400
-    add_hr = add_heart_rate(patient, str_to_int(in_data["heart_rate"])[0])
+
+    add_hr = add_heart_rate(patient, hr_info)
 
     # Data output and return
-    return "Added heart rate information {} "
-    "for patient id {}".format(add_hr, in_data["patient_id"]), 200
-
+    msg =  "Added heart rate information {} for ".format(add_hr)
+    msg += "patient id {}".format(in_data["patient_id"])
+    return msg, 200
 
 @app.route("/api/status/<patient_id>", methods=["GET"])
 def status_pid(patient_id):
@@ -208,7 +211,7 @@ def heart_rate_pid(patient_id):
         return patient, 400
 
     hr_list = prev_heart_rate(patient)
-    return hr_list, 200
+    return jsonify(hr_list), 200
 
 
 @app.route("/api/heart_rate/average/<patient_id>", methods=["GET"])
@@ -329,6 +332,18 @@ def patients_attending_username(attending_username):
 
     # Data output & return
     return jsonify(patList), 200
+
+
+@app.route("/api/patient_database/", methods=["GET"])
+def view_patient_db():
+    # Data output & return
+    return jsonify(patient_database), 200
+
+
+@app.route("/api/attending_database/", methods=["GET"])
+def view_attending_db():
+    # Data output & return
+    return jsonify(attending_database), 200
 
 
 def validate_dict_input(in_data, expected_keys):
