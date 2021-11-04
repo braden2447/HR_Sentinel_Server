@@ -473,7 +473,7 @@ def add_heart_rate(patient, heart_rate):
 
 
 def get_last_heart_rate(patient):
-    
+
     HR_data = patient["HR_data"]
     if len(HR_data) == 0:
         return None
@@ -482,7 +482,7 @@ def get_last_heart_rate(patient):
 
 def is_tachycardic(hr, age):
     """Evaluates if posted heart rate is tachycardic
-    
+
     Method curated by Braden Garrison
 
     Tachycardia is defined as a heart rate that is above normal resting
@@ -532,7 +532,7 @@ def is_tachycardic(hr, age):
 
 def tach_warning(patient, hr):
     """Creates log entry upon server receiving tachycardic HR post
-    
+
     Method curated by Braden Garrison
 
     Tachycardic heart rate values are defined in the is_tachycardic
@@ -618,7 +618,7 @@ def prev_heart_rate(patient):
 
 def heart_rate_average(hr_list):
     """Averages posted heart rates of a patient
-    
+
     Method curated by Braden Garrison
 
     The accepted heart rate list of a specific patient is iterated
@@ -642,7 +642,7 @@ def heart_rate_average(hr_list):
 
 def heart_rate_interval(interval_time, patient):
     """Gives list of heart rates posted after a specified time
-    
+
     Method curated by Braden Garrison
 
     Iterates through patient heart rate values to determine which
@@ -673,7 +673,7 @@ def str_to_int(value):
     """Converts an input string
     into int value, or returns input
     if input is already int
-    
+
     Method curated by Anuj Som
 
     Args:

@@ -70,8 +70,8 @@ def test_add_patient_to_database_log():
     from sentinel_server import add_patient_to_database
     pat, att = initialize_db()
     with LogCapture() as log_c:
-        add_attending_to_database(pat["id"], pat["attending"],
-                                  pat["age"])
+        add_patient_to_database(pat["id"], pat["attending"],
+                                pat["age"])
     log_c.check(('root', 'INFO', 'Registered new patient with ID 1'),)
 
 
@@ -79,6 +79,7 @@ def test_get_patient_from_database():
     from sentinel_server import get_patient_from_database
     from sentinel_server import patient_database
 
+    initialize_db()
     for patient in patient_database:
         assert patient == get_patient_from_database(patient["id"])
 
@@ -119,6 +120,7 @@ def test_get_attending_from_database():
     # for c in attending_database:
     #     print(c)
 
+    initialize_db()
     for attendant in attending_database:
         assert attendant == get_attending_from_database(attendant["name"])
 
@@ -163,7 +165,8 @@ def test_get_last_heart_rate():
     from sentinel_server import add_heart_rate
     from sentinel_server import get_patient_from_database
 
-    id_no = 650
+    initialize_db()
+    id_no = 1
     patient = get_patient_from_database(id_no)
     assert get_last_heart_rate(patient) is None
 
@@ -282,3 +285,25 @@ def clear_patient_database():
 
 def clear_attending_database():
     attending_database = []
+
+
+def initialize_db():
+    from sentinel_server import (add_attending_to_database,
+                                 add_patient_to_database)
+    patient_database.clear()
+    attending_database.clear()
+    test_pat = {"id": 1,
+                "age": 20,
+                "attending": "Smith.J",
+                "HR_data": []}
+    test_att = {"name": "Smith.J",
+                "email": "dr_smith@gmail.com",
+                "phone": "111-222-3333",
+                "patients": [test_pat]}
+    att = add_attending_to_database(test_att["name"],
+                                    test_att["email"],
+                                    test_att["phone"])
+    pat = add_patient_to_database(test_pat["id"],
+                                  test_pat["attending"],
+                                  test_pat["age"])
+    return pat, att
