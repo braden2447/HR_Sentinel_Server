@@ -1,3 +1,4 @@
+from typing import Type
 from flask import Flask, request, jsonify
 import requests
 from datetime import datetime as dt
@@ -126,14 +127,18 @@ def heart_rate():
         return error_string, status_code
 
     # Match patient and update heart rate information
-    patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
+    pat_id = str_to_int(in_data["patient_id"])[0]
+    hr_info = str_to_int(in_data["heart_rate"])[0]
+    patient = get_patient_from_database(pat_id)
     if (type(patient)) == str:
         return patient, 400
-    add_hr = add_heart_rate(patient, str_to_int(in_data["heart_rate"])[0])
+
+    add_hr = add_heart_rate(patient, hr_info)
 
     # Data output and return
-    return "Added heart rate information {} "
-    "for patient id {}".format(add_hr, in_data["patient_id"]), 200
+    msg = "Added heart rate information {} for ".format(add_hr)
+    msg += "patient id {}".format(in_data["patient_id"])
+    return msg, 200
 
 
 @app.route("/api/status/<patient_id>", methods=["GET"])
@@ -153,11 +158,11 @@ def status_pid(patient_id):
     This method will be used to tell if specified patient
     is tachycardic or not, and the time of the most recent
     heart rate. If no recent heart rate reported, returns
-    None
+    null
 
     Returns:
         string: Status
-        None: No HR data exists
+        Null: No HR data exists
     """
     # Accept and validate input
     in_data = patient_id
@@ -207,7 +212,7 @@ def heart_rate_pid(patient_id):
         return patient, 400
 
     hr_list = prev_heart_rate(patient)
-    return hr_list, 200
+    return jsonify(hr_list), 200
 
 
 @app.route("/api/heart_rate/average/<patient_id>", methods=["GET"])
@@ -220,6 +225,7 @@ def heart_rate_avg_pid(patient_id):
     <patient_id> request should contain an existing pid.
     If no patient is found with a pid matching <patient_id>,
     an error string indicating no patient found will be returned.
+    If no heart rate data is found, the average will deafult to 0.
     This method will be used to view the integer average of all
     stored heart values for a patient.
 
@@ -239,8 +245,10 @@ def heart_rate_avg_pid(patient_id):
         return patient, 400
 
     hr_list = prev_heart_rate(patient)
+    if(type(hr_list) == str):
+        return hr_list, 400
     hr_avg = heart_rate_average(hr_list)
-    return hr_avg, 200
+    return jsonify(hr_avg), 200
 
 
 @app.route("/api/heart_rate/interval_average", methods=["POST"])
@@ -270,11 +278,19 @@ def heart_rate_interval_avg():
     if error_string is not True:
         return error_string, status_code
 
-    patient = get_patient_from_database(str_to_int(in_data["patient_id"])[0])
+    print("Check 1\n")
+
+    pat_id = str_to_int(in_data["patient_id"])[0]
+    patient = get_patient_from_database(pat_id)
     if (type(patient)) == str:
         return patient, 400
+
+    print("Check 2\n")
+
     hr_interval = heart_rate_interval(in_data["heart_rate_average_since"],
                                       patient)
+    if type(hr_interval) == str:
+        hr_int_avg = "ERROR: no heart rate values in desired time range"
     hr_int_avg = heart_rate_average(hr_interval)
     return hr_int_avg, 200
 
@@ -307,6 +323,8 @@ def patients_attending_username(attending_username):
     attending = get_attending_from_database(in_data)
     if(type(attending) == str):
         return attending, 400
+    if(attending not in attending_database):
+        return "ERROR: Attending not in database", 400
 
     # External method handlers
 
@@ -328,6 +346,18 @@ def patients_attending_username(attending_username):
 
     # Data output & return
     return jsonify(patList), 200
+
+
+@app.route("/api/patient_database/", methods=["GET"])
+def view_patient_db():
+    # Data output & return
+    return jsonify(patient_database), 200
+
+
+@app.route("/api/attending_database/", methods=["GET"])
+def view_attending_db():
+    # Data output & return
+    return jsonify(attending_database), 200
 
 
 def validate_dict_input(in_data, expected_keys):
@@ -387,7 +417,11 @@ def add_patient_to_database(pat_id, att_name, pat_age):
         }
     patient_database.append(patient)
     attendant = get_attending_from_database(att_name)
-    attendant["patients"].append(patient)
+    try:
+        attendant["patients"].append(patient)
+    except TypeError:
+        logging.error('ID {} unable to be added to DB'.format(pat_id))
+        return patient
     logging.info('Registered new patient with ID {}'.format(pat_id))
     return patient
 
@@ -397,7 +431,7 @@ def get_patient_from_database(id_no):
     if len(patlist) == 0:
         return "ERROR: no patient with id {} in database".format(id_no)
     if len(patlist) > 1:
-        return "ERROR: patient id not unique identifier"
+        return "ERROR: patient id ({}) not unique identifier".format(id_no)
     return patlist[0]
 
 
@@ -518,6 +552,8 @@ def tach_warning(patient, hr):
 def tach_email(patient, att, email):
     """Emails attending upon server receiving tachycardic HR post
 
+    Method curated by Braden Garrison
+
     This server not only logs any events of tachycardic HR postings
     but also emails the attending on file for that patient. The email
     will alert the attending of the patient ID associated with the
@@ -554,6 +590,8 @@ def tach_email(patient, att, email):
 def prev_heart_rate(patient):
     """Gives list of all posted heart rates for a patient
 
+    Method curated by Braden Garrison
+
     The accepted patient database is analyzed to produce a list of
     all previously posted heart rates for that patient.
 
@@ -586,6 +624,8 @@ def heart_rate_average(hr_list):
         int: rounded average heart rate value for a patient
     """
     total = 0
+    if len(hr_list) == 0:
+        return 0
     for x in hr_list:
         total += x
     hr_avg = int(total/len(hr_list))
