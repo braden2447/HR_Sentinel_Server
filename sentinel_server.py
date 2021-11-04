@@ -360,12 +360,28 @@ def patients_attending_username(attending_username):
 
 @app.route("/api/patient_database/", methods=["GET"])
 def view_patient_db():
+    """Simply allows you to view the patient_database
+    within the server
+
+    Method curated by Anuj Som
+
+    Returns:
+        json: entire patient database
+    """
     # Data output & return
     return jsonify(patient_database), 200
 
 
 @app.route("/api/attending_database/", methods=["GET"])
 def view_attending_db():
+    """Simply allows you to view the attending_database
+    within the server
+
+    Method curated by Anuj Som
+
+    Returns:
+        json: entire patient database
+    """
     # Data output & return
     return jsonify(attending_database), 200
 
@@ -419,6 +435,24 @@ def validate_dict_input(in_data, expected_keys):
 
 
 def add_patient_to_database(pat_id, att_name, pat_age):
+    """Method which handles adding a new patient to the patient_database
+
+    Method curated by Anuj Som
+
+    Method inputs patient id, attending name, and patient age
+    and constructs a patient dictionary to hold information about
+    patient. It then stores this patient dict within the attending's
+    "patients" key, adds the patient to the patient_database, and
+    returns the patient dictionary.
+
+    Args:
+        pat_id (str, int): Patient's unique id
+        att_name (str): Patient's attending name "Lastname.FirstInitial"
+        pat_age (str, int): Patient's age
+
+    Returns:
+        dict: newly constructed patient dictionary
+    """
     patient = {
             "id": str_to_int(pat_id)[0],
             "age": str_to_int(pat_age)[0],
@@ -437,6 +471,20 @@ def add_patient_to_database(pat_id, att_name, pat_age):
 
 
 def get_patient_from_database(id_no):
+    """Method which handles accessing a patient from the patient_database
+
+    Method curated by Anuj Som
+
+    Method inputs patient id, iterates through the patient_database
+    and returns the id it finds, or throws error if no patient with
+    that id found, or id key not unique.
+
+    Args:
+        pat_id (int): Patient's unique id (must be int)
+
+    Returns:
+        dict: Patient dictionary within the database
+    """
     patlist = [x for x in patient_database if x["id"] == id_no]
     if len(patlist) == 0:
         return "ERROR: no patient with id {} in database".format(id_no)
@@ -446,6 +494,23 @@ def get_patient_from_database(id_no):
 
 
 def add_attending_to_database(att_name, att_email, att_phone):
+    """Method which handles adding a new attending to the attending_database
+
+    Method curated by Anuj Som
+
+    Method inputs attending name, attending_email, and attending_phone
+    and constructs a attending dictionary to hold information about
+    the physician. It then stores this attending dict within the
+    attending_database, and returns the new attending dictionary.
+
+    Args:
+        att_name (str): Attending's unique name
+        att_email (str): Attending's email
+        att_phone (str,) Attending's phone number
+
+    Returns:
+        dict: newly constructed attending dictionary
+    """
     attendant = {
             "name": att_name,
             "email": att_email,
@@ -459,6 +524,20 @@ def add_attending_to_database(att_name, att_email, att_phone):
 
 
 def get_attending_from_database(attendant_name):
+    """Method which handles accessing an attending from the attending_database
+
+    Method curated by Anuj Som
+
+    Method inputs unique attending name, uses this to iterate through
+    attending_database and find that attending.
+    Returns error str if attending name not unique or not in db.
+
+    Args:
+        pat_id (int): Patient's unique id (must be int)
+
+    Returns:
+        dict: Patient dictionary within the database
+    """
     attlist = [x for x in attending_database if x["name"] == attendant_name]
     if len(attlist) == 0:
         return "ERROR: no attending in database"
@@ -468,6 +547,21 @@ def get_attending_from_database(attendant_name):
 
 
 def add_heart_rate(patient, heart_rate):
+    """Method which handles adding heart rate data to patient
+
+    Method curated by Braden Garrison
+
+    Method accepts patient, heart_rate input and calculates
+    tachycardia status and obtains timestamp, and bundles this
+    into a dict hr_info which is then returned.
+
+    Args:
+        patient (dict): Patient dictionary from database
+        heart_rate (int): HR in bpm
+
+    Returns:
+        dict: HR_data which is added to patient_HR list.
+    """
     timestamp = dt.now()
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     tach = is_tachycardic(heart_rate, patient["age"])
@@ -482,6 +576,19 @@ def add_heart_rate(patient, heart_rate):
 
 
 def get_last_heart_rate(patient):
+    """Method which handles obtains patient's latest heart_rate data
+
+    Method curated by Anuj Som
+
+    Method accepts patient, obtains patient HR_data list's
+    last element. Returns empty list if no HR data yet posted.
+
+    Args:
+        patient (dict): Patient dictionary from database
+
+    Returns:
+        dict: Last posted HR_data.
+    """
     HR_data = patient["HR_data"]
     if len(HR_data) == 0:
         return []
@@ -490,6 +597,8 @@ def get_last_heart_rate(patient):
 
 def is_tachycardic(hr, age):
     """Evaluates if posted heart rate is tachycardic
+
+    Method curated by Braden Garrison
 
     Tachycardia is defined as a heart rate that is above normal resting
     rate. Specific tachycardic values are dependent upon patient age. More
@@ -538,6 +647,8 @@ def is_tachycardic(hr, age):
 
 def tach_warning(patient, hr):
     """Creates log entry upon server receiving tachycardic HR post
+
+    Method curated by Braden Garrison
 
     Tachycardic heart rate values are defined in the is_tachycardic
     function. Any heart rate values exceeding the specified range for
@@ -623,6 +734,8 @@ def prev_heart_rate(patient):
 def heart_rate_average(hr_list):
     """Averages posted heart rates of a patient
 
+    Method curaged by Braden Garrison
+
     The accepted heart rate list of a specific patient is iterated
     through to produce a total which is then divided by the list
     length to produce the heart rate average.
@@ -644,6 +757,8 @@ def heart_rate_average(hr_list):
 
 def heart_rate_interval(interval_time, patient):
     """Gives list of heart rates posted after a specified time
+
+    Method curated by Braden Garrison
 
     Iterates through patient heart rate values to determine which
     heart rates were posted after the specified interval time,
