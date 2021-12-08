@@ -5,8 +5,6 @@
 
 ## Authors: Braden Garrison and Anuj Som
 
-## Due: 11/3/21
-
 ## Program Instructions:
 
 This Flask web server functions as a simple, centralized heart rate sentinel server.
@@ -14,7 +12,7 @@ POST requests can be made to post data such as new attendings, new patients, and
 GET requests can be made to obtain specific information such as existing patients in database and heart rate data for each patient.
 Embedded within the server are functionalities such as logging and emailing attendings when a tachycardic heart rate is posted for a patient.
 
-This server is running on a virtual machine with the following hostname and port:
+This server **WAS** running on a virtual machine with the following hostname and port:
 
 ```vcm-23156.vm.duke.edu:5000```
 
